@@ -13,6 +13,14 @@ function openDetail() {
   router.push(`/plant/${props.plant.id}`)
 }
 
+function remove(e) {
+  e.stopPropagation()
+
+  if (!confirm('Xóa cây này?')) return
+
+  store.deletePlant(props.plant.id)
+}
+
 function onUpload(e) {
   const file = e.target.files[0]
   if (!file) return
@@ -42,7 +50,15 @@ function onUpload(e) {
         🌱 Chưa có ảnh
       </div>
 
-      <!-- upload button -->
+      <!-- DELETE BUTTON (FIXED POSITION) -->
+      <button
+        @click="remove"
+        class="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md"
+      >
+        🗑
+      </button>
+
+      <!-- UPLOAD -->
       <label
         class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg cursor-pointer"
         @click.stop
@@ -54,7 +70,6 @@ function onUpload(e) {
 
     <!-- CONTENT -->
     <div class="p-4 space-y-2">
-      <!-- NAME + PROGRESS -->
       <div class="flex justify-between items-center">
         <h2 class="font-semibold text-gray-900">
           {{ plant.name }}
@@ -65,12 +80,10 @@ function onUpload(e) {
         </span>
       </div>
 
-      <!-- STAGE -->
       <p class="text-sm text-gray-500">
         {{ plant.stage?.name }}
       </p>
 
-      <!-- PROGRESS BAR -->
       <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
         <div class="h-full bg-green-500 transition-all" :style="{ width: plant.progress + '%' }" />
       </div>

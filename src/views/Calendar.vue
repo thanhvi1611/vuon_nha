@@ -1,37 +1,18 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
 import dayjs from 'dayjs'
+import { useNotification } from '@/utils/notification'
 
 const store = usePlantStore()
+const { requestPermission, checkAndNotifyTodayTasks, startDailyNotification } = useNotification()
 
-const today = dayjs()
-const currentMonth = ref(today)
-const selectedDate = ref(today.format('YYYY-MM-DD'))
+// ==================== THỜI GIAN ====================
+const today = computed(() => dayjs())
+const currentMonth = ref(dayjs())
+const selectedDate = ref(today.value.format('YYYY-MM-DD'))
 
-onMounted(async () => {
-  await store.load()
-  requestNotification()
-  checkTodayTasks()
-})
-
-// 🔔 xin quyền notification
-async function requestNotification() {
-  if ('Notification' in window) {
-    await Notification.requestPermission()
-  }
-}
-
-// 🔔 gửi notification
-function notify(title) {
-  if (Notification.permission === 'granted') {
-    new Notification('🌱 Lịch làm vườn', {
-      body: title,
-    })
-  }
-}
-
-// 📌 Map cây
+// ==================== COMPUTED & METHODS (giữ nguyên) ====================
 const plantMap = computed(() => {
   const map = {}
   store.plants.forEach((p) => {
@@ -40,142 +21,163 @@ const plantMap = computed(() => {
   return map
 })
 
-// 📌 tasks theo ngày
 const tasksByDate = computed(() => {
   return store.tasks.filter((t) => t.date === selectedDate.value)
 })
 
-// 🌱 nhóm task theo cây
 const groupedTasks = computed(() => {
   const groups = {}
-
   tasksByDate.value.forEach((task) => {
     const plantId = task.plantId
-    if (!groups[plantId]) {
-      groups[plantId] = []
-    }
+    if (!groups[plantId]) groups[plantId] = []
     groups[plantId].push(task)
   })
-
   return groups
 })
 
-// 🔔 check task hôm nay
-function checkTodayTasks() {
-  const todayStr = today.format('YYYY-MM-DD')
-
-  const todayTasks = store.tasks.filter((t) => t.date === todayStr && !t.done)
-
-  todayTasks.forEach((t) => {
-    const plant = plantMap.value[t.plantId]
-    notify(`${t.title} - ${plant?.name}`)
-  })
-}
-
-// 📅 grid tháng
 const days = computed(() => {
-  const start = currentMonth.value.startOf('month')
-  const end = currentMonth.value.endOf('month')
+  const startOfMonth = currentMonth.value.startOf('month')
+  const endOfMonth = currentMonth.value.endOf('month')
+  const startDay = startOfMonth.day()
 
   const arr = []
-  const startDay = start.day()
-
   for (let i = 0; i < startDay; i++) arr.push(null)
-
-  for (let d = 1; d <= end.date(); d++) {
-    arr.push(start.date(d))
+  for (let d = 1; d <= endOfMonth.date(); d++) {
+    arr.push(startOfMonth.date(d))
   }
-
   return arr
 })
 
-// 📌 có task không
 function hasTask(date) {
-  const d = date.format('YYYY-MM-DD')
-  return store.tasks.some((t) => t.date === d)
+  if (!date) return false
+  const dateStr = date.format('YYYY-MM-DD')
+  return store.tasks.some((t) => t.date === dateStr && !t.done)
 }
 
-// 📌 đổi tháng
 function nextMonth() {
   currentMonth.value = currentMonth.value.add(1, 'month')
 }
 function prevMonth() {
   currentMonth.value = currentMonth.value.subtract(1, 'month')
 }
-</script>
+function selectDate(day) {
+  if (day) selectedDate.value = day.format('YYYY-MM-DD')
+}
 
+// ==================== LIFECYCLE ====================
+let cleanup = null
+
+onMounted(async () => {
+  await store.load()
+
+  const granted = await requestPermission()
+  if (granted) {
+    cleanup = startDailyNotification()
+  }
+})
+
+onUnmounted(() => {
+  if (cleanup) cleanup()
+})
+</script>
 <template>
-  <div class="space-y-5">
+  <div class="space-y-6">
     <!-- HEADER -->
-    <div class="flex justify-between items-center">
-      <button @click="prevMonth">‹</button>
-      <h2 class="font-semibold text-lg">
+    <div class="flex justify-between items-center px-1">
+      <button
+        @click="prevMonth"
+        class="w-10 h-10 flex items-center justify-center text-2xl text-gray-600 hover:bg-gray-100 rounded-xl transition"
+      >
+        ‹
+      </button>
+
+      <h2 class="text-xl font-semibold text-gray-800">
         {{ currentMonth.format('MM/YYYY') }}
       </h2>
-      <button @click="nextMonth">›</button>
+
+      <button
+        @click="nextMonth"
+        class="w-10 h-10 flex items-center justify-center text-2xl text-gray-600 hover:bg-gray-100 rounded-xl transition"
+      >
+        ›
+      </button>
     </div>
 
-    <!-- WEEK -->
-    <div class="grid grid-cols-7 text-center text-sm text-gray-400">
-      <div>CN</div>
-      <div>T2</div>
-      <div>T3</div>
-      <div>T4</div>
-      <div>T5</div>
-      <div>T6</div>
-      <div>T7</div>
+    <!-- WEEKDAY -->
+    <div class="grid grid-cols-7 text-center text-sm font-medium text-gray-400">
+      <div class="py-1">CN</div>
+      <div class="py-1">T2</div>
+      <div class="py-1">T3</div>
+      <div class="py-1">T4</div>
+      <div class="py-1">T5</div>
+      <div class="py-1">T6</div>
+      <div class="py-1">T7</div>
     </div>
 
-    <!-- GRID -->
+    <!-- CALENDAR GRID -->
     <div class="grid grid-cols-7 gap-2">
       <div
         v-for="(day, i) in days"
         :key="i"
-        class="h-12 flex flex-col items-center justify-center rounded-xl cursor-pointer"
+        class="h-14 flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-all active:scale-95"
         :class="[
-          day ? 'bg-white' : '',
-          day && day.format('YYYY-MM-DD') === selectedDate ? 'ring-2 ring-green-400' : '',
-          day && day.isSame(today, 'day') ? 'bg-green-50' : '',
+          day ? 'bg-white shadow-sm hover:shadow' : 'bg-transparent',
+          day && day.format('YYYY-MM-DD') === selectedDate
+            ? 'ring-2 ring-green-500 bg-green-50'
+            : '',
+          day && day.isSame(today, 'day') ? 'bg-green-100 font-medium' : '',
         ]"
-        @click="day && (selectedDate = day.format('YYYY-MM-DD'))"
+        @click="selectDate(day)"
       >
-        <span v-if="day">{{ day.date() }}</span>
+        <span
+          v-if="day"
+          class="text-base"
+          :class="day.isSame(today, 'day') ? 'text-green-600' : 'text-gray-700'"
+        >
+          {{ day.date() }}
+        </span>
 
-        <span v-if="day && hasTask(day)" class="w-1.5 h-1.5 bg-green-500 rounded-full mt-1" />
+        <!-- Dot indicator -->
+        <span v-if="day && hasTask(day)" class="mt-1 w-1.5 h-1.5 bg-green-500 rounded-full" />
       </div>
     </div>
 
-    <!-- TASK GROUP -->
+    <!-- TASK LIST -->
     <div class="space-y-4">
       <div
         v-for="(tasks, plantId) in groupedTasks"
         :key="plantId"
-        class="bg-white p-4 rounded-2xl shadow-sm"
+        class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"
       >
-        <!-- tên cây -->
-        <h3 class="font-semibold text-green-600 mb-2">🌱 {{ plantMap[plantId]?.name }}</h3>
+        <h3 class="font-semibold text-green-700 mb-3 flex items-center gap-2">
+          🌱 {{ plantMap[plantId]?.name }}
+        </h3>
 
-        <!-- task list -->
-        <div class="space-y-2">
+        <div class="space-y-3">
           <div
             v-for="task in tasks"
             :key="task.id"
             @click="store.toggleTask(task.id)"
-            class="flex justify-between items-center cursor-pointer"
+            class="flex justify-between items-center py-2 px-3 rounded-2xl hover:bg-gray-50 cursor-pointer transition"
           >
-            <span :class="task.done ? 'line-through text-gray-400' : ''">
+            <span
+              :class="task.done ? 'line-through text-gray-400' : 'text-gray-700'"
+              class="text-[15px]"
+            >
               {{ task.title }}
             </span>
 
-            <span v-if="task.done">✔</span>
+            <span v-if="task.done" class="text-green-500 text-xl leading-none"> ✓ </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- EMPTY -->
-    <div v-if="!Object.keys(groupedTasks).length" class="text-center text-gray-400">
-      Không có việc 🎉
+    <!-- EMPTY STATE -->
+    <div v-if="!Object.keys(groupedTasks).length" class="text-center py-12 text-gray-400">
+      <div class="text-5xl mb-3">🌱</div>
+      <p class="text-lg">Không có công việc nào hôm nay</p>
+      <p class="text-sm">Chúc bạn ngày vui vẻ!</p>
     </div>
   </div>
 </template>

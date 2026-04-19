@@ -8,14 +8,34 @@ firebase.initializeApp({
   messagingSenderId: '374287500808',
   appId: '1:374287500808:web:6b7d177cc6adfb8dd533bd',
 })
+
 const messaging = firebase.messaging()
 
-// 👉 nhận push khi app đang background
-messaging.onBackgroundMessage(function (payload) {
-  console.log('📩 Background message:', payload)
+messaging.onBackgroundMessage((payload) => {
+  console.log('[FCM] Background message received:', payload)
 
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: '/icon.png',
-  })
+  const title = payload.notification?.title || '🌱 Lịch làm vườn'
+  const body = payload.notification?.body || 'Bạn có công việc cần làm'
+
+  self.registration
+    .showNotification(title, {
+      body: body,
+      icon: '/icons/plant-192.png', // Phải tồn tại file này
+      badge: '/icons/badge-72.png',
+      tag: 'plant-care-' + Date.now(),
+      vibrate: [100, 50, 100],
+      requireInteraction: false,
+    })
+    .then(() => {
+      console.log('✅ showNotification called successfully')
+    })
+    .catch((err) => {
+      console.error('❌ showNotification error:', err)
+    })
+})
+
+// Click thông báo
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(clients.openWindow('/'))
 })

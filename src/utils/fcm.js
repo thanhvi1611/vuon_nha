@@ -23,28 +23,25 @@ export async function initFCM() {
 }
 
 // 👉 nhận khi đang mở app
+
 export function listenFCM() {
-  onMessage(messaging, (payload) => {
+  onMessage(messaging, async (payload) => {
     console.log('📩 Foreground message:', payload)
 
-    // ❗ CHECK permission
-    if (Notification.permission !== 'granted') {
-      console.warn('❌ Chưa có quyền notification')
-      return
-    }
-
-    // ❗ LẤY DATA AN TOÀN (tránh undefined)
     const title = payload.notification?.title || '🌱 Thông báo'
-    const body = payload.notification?.body || 'Có việc cần làm'
+    const body = payload.notification?.body || ''
 
     console.log('🚀 Hiện notification:', title)
 
-    // 🔥 FIX QUAN TRỌNG: thêm setTimeout
-    setTimeout(() => {
-      new Notification(title, {
-        body: body,
-        icon: '/icon.png',
+    // 🔥 QUAN TRỌNG: dùng đúng service worker Firebase
+    const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+
+    if (registration) {
+      registration.showNotification(title, {
+        body,
       })
-    }, 100)
+    } else {
+      console.error('❌ Không tìm thấy firebase-messaging-sw.js')
+    }
   })
 }

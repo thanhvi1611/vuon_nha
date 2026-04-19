@@ -1,19 +1,17 @@
-// calendar.vue
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
 import dayjs from 'dayjs'
-import { useNotification } from '@/utils/notification'
+import { initFCM, listenFCM } from '@/utils/fcm'
 
 const store = usePlantStore()
-const { requestPermission, checkAndNotifyTodayTasks, startDailyNotification } = useNotification()
 
-// ==================== THỜI GIAN ====================
+// ==================== TIME ====================
 const today = computed(() => dayjs())
 const currentMonth = ref(dayjs())
 const selectedDate = ref(today.value.format('YYYY-MM-DD'))
 
-// ==================== COMPUTED & METHODS (giữ nguyên) ====================
+// ==================== COMPUTED ====================
 const plantMap = computed(() => {
   const map = {}
   store.plants.forEach((p) => {
@@ -49,6 +47,7 @@ const days = computed(() => {
   return arr
 })
 
+// ==================== METHODS ====================
 function hasTask(date) {
   if (!date) return false
   const dateStr = date.format('YYYY-MM-DD')
@@ -58,51 +57,30 @@ function hasTask(date) {
 function nextMonth() {
   currentMonth.value = currentMonth.value.add(1, 'month')
 }
+
 function prevMonth() {
   currentMonth.value = currentMonth.value.subtract(1, 'month')
 }
+
 function selectDate(day) {
   if (day) selectedDate.value = day.format('YYYY-MM-DD')
 }
 
-// ==================== LIFECYCLE ====================
-
-import { initFCM, listenFCM } from '@/utils/fcm'
-
+// ==================== INIT ====================
 onMounted(async () => {
   await store.load()
 
+  console.log('📢 Notification permission:', Notification.permission)
+
+  // 👉 INIT FIREBASE
   const token = await initFCM()
-  console.log('token:', token)
+  console.log('🔥 FCM TOKEN:', token)
+
+  // 👉 LẮNG NGHE PUSH
   listenFCM()
-
-  // 👉 bạn có thể lưu token vào DB nếu cần
-})
-
-let cleanup = null
-onMounted(async () => {
-  await store.load()
-
-  console.log('📢 Permission hiện tại:', Notification.permission)
-
-  const granted = await requestPermission()
-  if (!granted) {
-    alert('Vui lòng cho phép thông báo cho website này!')
-  }
-})
-onMounted(async () => {
-  await store.load()
-
-  const granted = await requestPermission()
-  if (granted) {
-    cleanup = startDailyNotification()
-  }
-})
-
-onUnmounted(() => {
-  if (cleanup) cleanup()
 })
 </script>
+
 <template>
   <div class="space-y-6">
     <!-- HEADER -->
@@ -137,7 +115,7 @@ onUnmounted(() => {
       <div class="py-1">T7</div>
     </div>
 
-    <!-- CALENDAR GRID -->
+    <!-- CALENDAR -->
     <div class="grid grid-cols-7 gap-2">
       <div
         v-for="(day, i) in days"
@@ -160,7 +138,6 @@ onUnmounted(() => {
           {{ day.date() }}
         </span>
 
-        <!-- Dot indicator -->
         <span v-if="day && hasTask(day)" class="mt-1 w-1.5 h-1.5 bg-green-500 rounded-full" />
       </div>
     </div>
@@ -190,13 +167,13 @@ onUnmounted(() => {
               {{ task.title }}
             </span>
 
-            <span v-if="task.done" class="text-green-500 text-xl leading-none"> ✓ </span>
+            <span v-if="task.done" class="text-green-500 text-xl"> ✓ </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- EMPTY STATE -->
+    <!-- EMPTY -->
     <div v-if="!Object.keys(groupedTasks).length" class="text-center py-12 text-gray-400">
       <div class="text-5xl mb-3">🌱</div>
       <p class="text-lg">Không có công việc nào hôm nay</p>

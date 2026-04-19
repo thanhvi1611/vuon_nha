@@ -1,4 +1,5 @@
 <script setup>
+import { useRouter } from 'vue-router'
 import { usePlantStore } from '@/stores/plantStore'
 
 const props = defineProps({
@@ -6,51 +7,73 @@ const props = defineProps({
 })
 
 const store = usePlantStore()
+const router = useRouter()
 
-async function remove() {
-  const ok = confirm(`Xóa cây "${props.plant.name}"?`)
-  if (!ok) return
+function openDetail() {
+  router.push(`/plant/${props.plant.id}`)
+}
 
-  await store.deletePlant(props.plant.id)
+function onUpload(e) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+
+  reader.onload = async () => {
+    await store.updatePlant(props.plant.id, {
+      image: reader.result,
+    })
+  }
+
+  reader.readAsDataURL(file)
 }
 </script>
 
 <template>
-  <div class="bg-white rounded-2xl p-4 shadow-sm transition hover:shadow-md relative">
-    <!-- Nút xóa -->
-    <button
-      @click.stop="remove"
-      class="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-500 transition"
-    >
-      🗑️
-    </button>
+  <div
+    @click="openDetail"
+    class="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md active:scale-[0.99]"
+  >
+    <!-- IMAGE -->
+    <div class="relative h-40 bg-gray-100">
+      <img v-if="plant.image" :src="plant.image" class="w-full h-full object-cover" />
 
-    <!-- Header -->
-    <div class="flex justify-between items-start pr-10">
-      <div>
-        <h2 class="font-semibold text-lg text-gray-900">
+      <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+        🌱 Chưa có ảnh
+      </div>
+
+      <!-- upload button -->
+      <label
+        class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg cursor-pointer"
+        @click.stop
+      >
+        📷
+        <input type="file" accept="image/*" class="hidden" @change="onUpload" />
+      </label>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="p-4 space-y-2">
+      <!-- NAME + PROGRESS -->
+      <div class="flex justify-between items-center">
+        <h2 class="font-semibold text-gray-900">
           {{ plant.name }}
         </h2>
 
-        <p class="text-sm text-gray-500">
-          {{ plant.stage?.name }}
-        </p>
+        <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+          {{ plant.progress }}%
+        </span>
       </div>
 
-      <!-- % progress -->
-      <span
-        class="text-sm font-medium px-2 py-1 rounded-full bg-[rgb(var(--color-primary)/0.1)] text-[rgb(var(--color-primary))]"
-      >
-        {{ plant.progress }}%
-      </span>
-    </div>
+      <!-- STAGE -->
+      <p class="text-sm text-gray-500">
+        {{ plant.stage?.name }}
+      </p>
 
-    <!-- Progress bar -->
-    <div class="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
-      <div
-        class="h-full bg-[rgb(var(--color-primary))] transition-all"
-        :style="{ width: plant.progress + '%' }"
-      />
+      <!-- PROGRESS BAR -->
+      <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div class="h-full bg-green-500 transition-all" :style="{ width: plant.progress + '%' }" />
+      </div>
     </div>
   </div>
 </template>

@@ -32,3 +32,8 @@ setInterval(async () => {
     })
   }
 }, 60000) // check mỗi phút
+import { runDailyNotification } from '@/utils/notification'
+
+setInterval(() => {
+  runDailyNotification()
+}, 60000)

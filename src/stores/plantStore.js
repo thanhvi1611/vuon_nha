@@ -66,8 +66,13 @@ export const usePlantStore = defineStore('plant', {
         plantId,
         title: t.title,
         done: false,
+        notified: false, // 👈 THÊM DÒNG NÀY
         date: dayjs(plant.startDate).add(t.day, 'day').format('YYYY-MM-DD'),
       }))
+    },
+    async updatePlant(id, data) {
+      await db.plants.update(id, data)
+      await this.load()
     },
 
     // 📊 Tính progress

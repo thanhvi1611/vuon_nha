@@ -10,8 +10,8 @@ const today = dayjs().format('DD/MM')
       <!-- Top row -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-lg font-semibold">🌱 Vườn Nhà</h1>
-          <p class="text-xs text-gray-400">Hôm nay {{ today }}</p>
+          <h1 class="text-xl font-bold">🌱 Vườn Nhà</h1>
+          <p class="text-sm text-gray-500">Hôm nay {{ today }}</p>
         </div>
 
         <!-- Actions -->

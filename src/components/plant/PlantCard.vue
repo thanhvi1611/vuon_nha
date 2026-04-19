@@ -10,15 +10,13 @@ defineProps({
   >
     <div class="flex justify-between items-start">
       <div>
-        <h2 class="font-semibold text-base">{{ plant.name }}</h2>
-        <p class="text-xs text-gray-400">Gieo {{ plant.date }}</p>
+        <h2 class="font-semibold text-lg text-gray-900">
+          {{ plant.name }}
+        </h2>
+        <p class="text-sm text-gray-500">Gieo {{ plant.date }}</p>
       </div>
 
-      <span
-        class="text-xs px-2 py-1 rounded-full bg-[rgb(var(--color-primary)/0.1)] text-[rgb(var(--color-primary))]"
-      >
-        {{ plant.progress }}%
-      </span>
+      <span class="text-sm px-2 py-1 rounded-full"> {{ plant.progress }}% </span>
     </div>
 
     <!-- Progress -->

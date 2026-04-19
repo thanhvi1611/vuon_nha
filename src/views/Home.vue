@@ -17,7 +17,8 @@ onMounted(() => {
       :key="p.id"
       :plant="{
         ...p,
-        progress: 50,
+        progress: store.getProgress(p),
+        stage: store.getStage(p),
       }"
     />
   </div>

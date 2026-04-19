@@ -1,9 +1,16 @@
-// composables/useNotification.js
+// utils/useNotification.js
 import { onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { db } from '@/db'
 
 export function useNotification() {
+  const testNotification = () => {
+    new Notification('🧪 Test Notification', {
+      body: 'Nếu bạn thấy thông báo này thì hệ thống đang hoạt động',
+      icon: '',
+    })
+  }
+
   const requestPermission = async () => {
     if (!('Notification' in window)) {
       console.warn('❌ Trình duyệt không hỗ trợ Notification')
@@ -27,7 +34,7 @@ export function useNotification() {
     return permission === 'granted'
   }
 
-  const sendNotification = (title, body = 'Đến giờ chăm sóc cây rồi!') => {
+  const sendNotification1 = (title, body = 'Đến giờ chăm sóc cây rồi!') => {
     if (Notification.permission !== 'granted') {
       console.warn('⚠️ Không thể gửi thông báo vì permission chưa được cấp')
       return
@@ -46,7 +53,33 @@ export function useNotification() {
       console.error('❌ Lỗi khi tạo Notification:', err)
     }
   }
+  const sendNotification = (title, body = 'Đến giờ chăm sóc cây rồi!') => {
+    if (Notification.permission !== 'granted') {
+      console.warn('⚠️ Permission chưa được cấp')
+      return
+    }
 
+    console.log(`🚀 Đang tạo Notification: "${title}"`)
+
+    try {
+      const notification = new Notification(`🌱 ${title}`, {
+        body: body,
+        icon: '', // ← Bỏ icon tạm thời để test
+        tag: `plant-task-${Date.now()}`,
+        requireInteraction: false, // tự động đóng sau vài giây
+      })
+
+      console.log('✅ Notification object đã tạo:', notification)
+
+      // Test click
+      notification.onclick = () => {
+        console.log('🖱️ Người dùng click vào thông báo')
+        window.focus()
+      }
+    } catch (err) {
+      console.error('❌ Lỗi khi tạo Notification:', err)
+    }
+  }
   // ==================== DEBUG VERSION ====================
   const checkAndNotifyTodayTasks = async () => {
     const today = dayjs().format('YYYY-MM-DD')
@@ -123,3 +156,5 @@ export function useNotification() {
     checkAndNotifyTodayTasks,
   }
 }
+
+// Thêm vào startDailyNotification hoặc onMounted để test

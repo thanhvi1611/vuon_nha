@@ -1,3 +1,4 @@
+// Addplant.vue
 <script setup>
 import { ref, computed } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
@@ -17,65 +18,18 @@ const selectedPlant = computed(() => plantTemplates.find((p) => p.id === type.va
 async function add() {
   if (!type.value || !startDate.value) return
 
-  // 1. Thêm cây mới
-  const newPlant = await store.addPlant({
+  const newPlantData = {
     name: selectedPlant.value.name,
     type: selectedPlant.value.id,
     startDate: startDate.value,
     image: selectedPlant.value.image || '',
-  })
-
-  // 2. Tạo các task chăm sóc mặc định kèm reminderTimes
-  if (newPlant) {
-    await createDefaultTasks(newPlant.id, startDate.value)
   }
 
+  // Thêm cây + tự động tạo tasks
+  await store.addPlant(newPlantData)
+
+  console.log('🌱 Đã thêm cây và tạo lịch chăm sóc thành công!')
   router.push('/')
-}
-
-// ==================== TẠO TASK MẶC ĐỊNH ====================
-async function createDefaultTasks(plantId, startDateStr) {
-  const start = dayjs(startDateStr)
-
-  const defaultTasks = [
-    {
-      title: 'Tưới nước lần đầu',
-      date: start.format('YYYY-MM-DD'),
-      reminderTimes: ['07:30', '16:30'],
-    },
-    {
-      title: 'Kiểm tra đất và độ ẩm',
-      date: start.add(2, 'day').format('YYYY-MM-DD'),
-      reminderTimes: ['08:00'],
-    },
-    {
-      title: 'Bón phân hữu cơ',
-      date: start.add(7, 'day').format('YYYY-MM-DD'),
-      reminderTimes: ['09:00', '17:00'],
-    },
-    {
-      title: 'Kiểm tra sâu bệnh',
-      date: start.add(10, 'day').format('YYYY-MM-DD'),
-      reminderTimes: ['07:45'],
-    },
-    {
-      title: 'Tưới nước định kỳ',
-      date: start.add(14, 'day').format('YYYY-MM-DD'),
-      reminderTimes: ['07:30', '16:30'],
-    },
-  ]
-
-  for (const task of defaultTasks) {
-    await store.addTask({
-      plantId: plantId,
-      title: task.title,
-      date: task.date,
-      done: false,
-      reminderTimes: task.reminderTimes,
-    })
-  }
-
-  console.log(`🌱 Đã tạo ${defaultTasks.length} task mặc định cho cây mới`)
 }
 </script>
 
@@ -94,7 +48,6 @@ async function createDefaultTasks(plantId, startDateStr) {
       <h2 class="text-sm font-semibold text-gray-600">Chọn loại cây</h2>
       <PlantSelector @select="(val) => (type = val)" />
 
-      <!-- PREVIEW -->
       <div
         v-if="selectedPlant"
         class="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-green-100 to-green-50 border border-green-200"
@@ -102,9 +55,7 @@ async function createDefaultTasks(plantId, startDateStr) {
         <div class="text-4xl">{{ selectedPlant.icon }}</div>
         <div>
           <p class="font-semibold text-gray-900">{{ selectedPlant.name }}</p>
-          <p class="text-xs text-gray-500">
-            {{ selectedPlant.duration }} ngày • {{ selectedPlant.careLevel || 'Dễ chăm' }}
-          </p>
+          <p class="text-xs text-gray-500">{{ selectedPlant.duration }} ngày</p>
         </div>
       </div>
     </div>
@@ -117,15 +68,15 @@ async function createDefaultTasks(plantId, startDateStr) {
       <input
         v-model="startDate"
         type="date"
-        class="w-full rounded-2xl px-4 py-3 bg-white/80 border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none text-base"
+        class="w-full rounded-2xl px-4 py-3 bg-white/80 border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
       />
     </div>
 
-    <!-- CTA -->
+    <!-- BUTTON -->
     <button
       @click="add"
       :disabled="!type || !startDate"
-      class="w-full py-4 rounded-2xl text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-200 active:scale-95 transition disabled:opacity-50"
+      class="w-full py-4 rounded-2xl text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-200 active:scale-95 disabled:opacity-50 transition"
     >
       Thêm cây và tạo lịch chăm sóc 🌿
     </button>

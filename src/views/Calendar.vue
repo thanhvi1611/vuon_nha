@@ -1,3 +1,4 @@
+// calendar.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
@@ -65,8 +66,30 @@ function selectDate(day) {
 }
 
 // ==================== LIFECYCLE ====================
-let cleanup = null
 
+import { initFCM, listenFCM } from '@/utils/fcm'
+
+onMounted(async () => {
+  await store.load()
+
+  const token = await initFCM()
+  console.log('token:', token)
+  listenFCM()
+
+  // 👉 bạn có thể lưu token vào DB nếu cần
+})
+
+let cleanup = null
+onMounted(async () => {
+  await store.load()
+
+  console.log('📢 Permission hiện tại:', Notification.permission)
+
+  const granted = await requestPermission()
+  if (!granted) {
+    alert('Vui lòng cho phép thông báo cho website này!')
+  }
+})
 onMounted(async () => {
   await store.load()
 

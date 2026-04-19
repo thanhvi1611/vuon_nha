@@ -11,3 +11,18 @@ app.use(createPinia())
 app.use(router)
 
 app.mount('#app')
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(() => {
+    console.log('✅ SW registered')
+  })
+}
+const showNotification = async (title, body) => {
+  const reg = await navigator.serviceWorker.getRegistration()
+
+  if (reg) {
+    reg.showNotification(`🌱 ${title}`, {
+      body,
+      icon: '/icon.png',
+    })
+  }
+}

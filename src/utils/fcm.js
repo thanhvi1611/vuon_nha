@@ -9,65 +9,53 @@ const VAPID_KEY =
 
 export async function initFCM() {
   try {
-    console.log('🔄 Bắt đầu initFCM...')
+    console.log('🔄 [FCM] Bắt đầu init trên mobile...')
 
-    // 1. Xin quyền thông báo
+    // 1. Xin quyền
     const permission = await Notification.requestPermission()
     console.log('📢 Permission:', permission)
 
     if (permission !== 'granted') {
-      alert('Vui lòng cho phép thông báo cho website')
+      alert('Bạn phải cho phép thông báo trước')
       return null
     }
 
-    // 2. Đăng ký Service Worker và chờ nó active (RẤT QUAN TRỌNG)
-    if (!('serviceWorker' in navigator)) {
-      alert('Trình duyệt không hỗ trợ Service Worker')
-      return null
-    }
-
-    console.log('📌 Đang đăng ký Service Worker...')
+    // 2. Đăng ký Service Worker
     const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    console.log('✅ SW Registered, scope:', swRegistration.scope)
 
-    // Chờ Service Worker active
+    // 3. Chờ Service Worker active
     await navigator.serviceWorker.ready
-    console.log('✅ Service Worker is ready and active')
+    console.log('✅ Service Worker is READY')
 
-    // 3. Lấy token
-    console.log('📌 Đang lấy FCM Token...')
+    // 4. Lấy token với delay nhỏ (rất quan trọng trên mobile)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: swRegistration,
     })
 
-    if (token) {
-      console.log('🔥 FCM TOKEN THÀNH CÔNG:', token)
-      await saveTokenToCloud(token)
-      alert('✅ Lấy FCM Token thành công!')
-      return token
-    } else {
-      alert('⚠️ Không lấy được token')
-      return null
-    }
+    console.log('🔥 FCM TOKEN:', token)
+    await saveTokenToCloud(token)
+    alert('✅ Lấy token thành công!')
+
+    return token
   } catch (error) {
-    console.error('❌ Lỗi initFCM:', error)
+    console.error('❌ Lỗi FCM chi tiết:', error)
     alert('Lỗi FCM: ' + error.message)
     return null
   }
 }
 
 async function saveTokenToCloud(token) {
-  try {
-    await setDoc(
-      doc(db, 'users', 'me'),
-      {
-        fcmToken: token,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    )
-    console.log('✅ Đã lưu token vào Firestore')
-  } catch (err) {
-    console.error('Lỗi lưu token:', err)
-  }
+  await setDoc(
+    doc(db, 'users', 'me'),
+    {
+      fcmToken: token,
+      updatedAt: new Date().toISOString(),
+      platform: 'android',
+    },
+    { merge: true },
+  )
 }

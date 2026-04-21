@@ -20,11 +20,13 @@ const VAPID_KEY =
 
 // 👉 xin quyền + lấy token
 export async function initFCM() {
+  alert('đang initFCM')
+
   const permission = await Notification.requestPermission()
 
   if (permission !== 'granted') {
     console.log('❌ Không có quyền thông báo')
-    alert('permison error')
+    alert('Không có quyền thông báo')
     return null
   }
 

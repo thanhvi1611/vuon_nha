@@ -1,7 +1,58 @@
+// firebase.js hoặc file initFCM
 import { getToken, onMessage } from 'firebase/messaging'
 import { messaging } from '@/firebase'
-
 import { db } from '@/firebase' // firestore
+
+const VAPID_KEY =
+  'BPzOQo4IvYtRpXr37Mom8mr4tvP8SA4s-nMia5cL1rU6cKP8PrnH1Scsw69Mom_SmfbSg5tjp84YKdvt6183HiA'
+
+export async function initFCM() {
+  try {
+    console.log('🔄 Bắt đầu initFCM...')
+
+    // 1. Xin quyền
+    const permission = await Notification.requestPermission()
+    console.log('📢 Notification permission:', permission)
+
+    if (permission !== 'granted') {
+      alert('Vui lòng cho phép thông báo trong cài đặt Chrome')
+      return null
+    }
+
+    // 2. Đăng ký Service Worker (rất quan trọng trên mobile)
+    let swRegistration = null
+    if ('serviceWorker' in navigator) {
+      try {
+        swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/',
+        })
+        console.log('✅ Service Worker registered successfully')
+      } catch (err) {
+        console.error('❌ Service Worker register failed:', err)
+      }
+    }
+
+    // 3. Lấy token
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: swRegistration,
+    })
+
+    if (token) {
+      console.log('🔥 FCM TOKEN (Mobile):', token)
+      // Lưu token
+      await saveTokenToCloud(token)
+      return token
+    } else {
+      console.warn('⚠️ getToken trả về null')
+      return null
+    }
+  } catch (error) {
+    console.error('❌ Lỗi initFCM:', error)
+    alert('Lỗi FCM: ' + error.message)
+    return null
+  }
+}
 
 export async function saveTokenToCloud() {
   const token = await getToken(messaging, {
@@ -14,51 +65,4 @@ export async function saveTokenToCloud() {
   })
 
   return token
-}
-const VAPID_KEY =
-  'BPzOQo4IvYtRpXr37Mom8mr4tvP8SA4s-nMia5cL1rU6cKP8PrnH1Scsw69Mom_SmfbSg5tjp84YKdvt6183HiA'
-
-// 👉 xin quyền + lấy token
-export async function initFCM() {
-  alert('đang initFCM')
-
-  const permission = await Notification.requestPermission()
-
-  if (permission !== 'granted') {
-    console.log('❌ Không có quyền thông báo')
-    alert('Không có quyền thông báo')
-    return null
-  }
-
-  const token = await getToken(messaging, {
-    vapidKey: VAPID_KEY,
-  })
-
-  console.log('🔥 FCM TOKEN:', token)
-
-  return token
-}
-
-// 👉 nhận khi đang mở app
-
-export function listenFCM() {
-  onMessage(messaging, async (payload) => {
-    console.log('📩 Foreground message:', payload)
-
-    const title = payload.notification?.title || '🌱 Thông báo'
-    const body = payload.notification?.body || ''
-
-    console.log('🚀 Hiện notification:', title)
-
-    // 🔥 QUAN TRỌNG: dùng đúng service worker Firebase
-    const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
-
-    if (registration) {
-      registration.showNotification(title, {
-        body,
-      })
-    } else {
-      console.error('❌ Không tìm thấy firebase-messaging-sw.js')
-    }
-  })
 }

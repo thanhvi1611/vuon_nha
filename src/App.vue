@@ -51,6 +51,9 @@ onMounted(() => {
 })
 async function testAPI() {
   const res = await fetch('/api/reminder')
+
+  const text = await res.text()
+  console.log('RAW RESPONSE:', text)
   const data = await res.json()
   console.log('API result:', data)
 }

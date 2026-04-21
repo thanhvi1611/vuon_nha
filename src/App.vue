@@ -15,6 +15,11 @@ onMounted(async () => {
     console.log('✅ Lưu token vào store:', token)
   }
 })
+async function testFCM() {
+  const token = await initFCM()
+  if (token) alert('✅ Lấy token thành công!\n' + token.substring(0, 30) + '...')
+  else alert('❌ Không lấy được token')
+}
 </script>
 
 <template>
@@ -24,7 +29,10 @@ onMounted(async () => {
 
     <!-- Content -->
     <main class="px-4 pt-4 pb-24">
-      TOken: {{ store.fcmToken }}
+      <button @click="testFCM" class="bg-red-500 text-white p-4 rounded-xl">
+        Test FCM trên Mobile
+      </button>
+      <div>TOken: {{ store.fcmToken }}</div>
       <router-view />
     </main>
 

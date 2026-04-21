@@ -1,51 +1,91 @@
-const functions = require('firebase-functions')
-const admin = require('firebase-admin')
+import * as functions from 'firebase-functions'
+import admin from 'firebase-admin'
 
 admin.initializeApp()
 
+const db = admin.firestore()
+
 // ⏰ chạy mỗi phút
-exports.scheduleNotify = functions.pubsub.schedule('* * * * *').onRun(async (context) => {
-  const now = new Date()
+export const sendPlantReminders = functions.pubsub
+  .schedule('* * * * *')
+  .timeZone('Asia/Ho_Chi_Minh')
+  .onRun(async () => {
+    const now = new Date()
 
-  const currentTime = now.toTimeString().slice(0, 5) // HH:mm
-  const today = now.toISOString().slice(0, 10) // YYYY-MM-DD
+    const today = now.toISOString().slice(0, 10)
+    const currentTime = now.toTimeString().slice(0, 5) // HH:mm
 
-  console.log('⏰ Checking:', today, currentTime)
+    console.log(`\n⏰ RUN at ${currentTime} | ${today}`)
 
-  const db = admin.firestore()
+    try {
+      const snapshot = await db.collection('tasks').where('date', '==', today).get()
 
-  const snapshot = await db
-    .collection('tasks')
-    .where('date', '==', today)
-    .where('done', '==', false)
-    .get()
+      console.log(`📋 Found ${snapshot.size} tasks today`)
 
-  for (const doc of snapshot.docs) {
-    const task = doc.data()
+      const promises = []
 
-    const times = task.reminderTimes || []
+      snapshot.forEach((doc) => {
+        const task = doc.data()
+        const docRef = doc.ref
 
-    if (!times.includes(currentTime)) continue
+        const reminderTimes = task.reminderTimes || []
+        const token = task.fcmToken
 
-    if (task.notifiedTimes?.includes(currentTime)) continue
+        console.log(`\n🌱 Task: ${task.title}`)
+        console.log(`⏰ ReminderTimes:`, reminderTimes)
 
-    const token = task.fcmToken
-    if (!token) continue
+        if (!token) {
+          console.log('⚠️ No token → skip')
+          return
+        }
 
-    console.log('🔔 Sending:', task.title)
+        if (!reminderTimes.includes(currentTime)) {
+          return
+        }
 
-    await admin.messaging().send({
-      token: token,
-      notification: {
-        title: `🌱 ${task.title}`,
-        body: `Đến giờ: ${currentTime}`,
-      },
-    })
+        const key = `${today}_${currentTime.replace(':', '')}`
 
-    await doc.ref.update({
-      notifiedTimes: admin.firestore.FieldValue.arrayUnion(currentTime),
-    })
-  }
+        if (task.notifiedMap && task.notifiedMap[key]) {
+          console.log('⚠️ Already sent → skip')
+          return
+        }
 
-  return null
-})
+        console.log('🚀 Sending notification...')
+
+        const message = {
+          token,
+          notification: {
+            title: '🌱 Nhắc chăm cây',
+            body: task.title,
+          },
+          android: {
+            priority: 'high',
+          },
+        }
+
+        const sendPromise = admin
+          .messaging()
+          .send(message)
+          .then(async (res) => {
+            console.log('✅ Sent:', res)
+
+            await docRef.update({
+              [`notifiedMap.${key}`]: true,
+            })
+          })
+          .catch((err) => {
+            console.error('❌ Send error:', err)
+          })
+
+        promises.push(sendPromise)
+      })
+
+      await Promise.all(promises)
+
+      console.log('🎉 DONE cycle')
+    } catch (err) {
+      console.error('🔥 ERROR:', err)
+    }
+
+    return null
+  })

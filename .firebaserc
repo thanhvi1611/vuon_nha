@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "vuonannhien-cd467"
-  }
+    "default": "vuonannhien-cd467",
+    "vuon_an_nhien": "vuonannhien-cd467"
+  },
+  "targets": {},
+  "etags": {}
 }

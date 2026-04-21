@@ -24,6 +24,7 @@ export async function initFCM() {
 
   if (permission !== 'granted') {
     console.log('❌ Không có quyền thông báo')
+    alert('permison error')
     return null
   }
 

@@ -1,6 +1,20 @@
 <script setup>
 import BottomNav from '@/components/layout/BottomNav.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
+
+import { onMounted } from 'vue'
+import { usePlantStore } from '@/stores/plantStore'
+import { initFCM } from '@/utils/fcm'
+
+const store = usePlantStore()
+
+onMounted(async () => {
+  const token = await initFCM()
+  if (token) {
+    store.fcmToken = token
+    console.log('✅ Lưu token vào store:', token)
+  }
+})
 </script>
 
 <template>

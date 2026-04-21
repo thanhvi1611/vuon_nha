@@ -1,8 +1,22 @@
 import { getToken, onMessage } from 'firebase/messaging'
 import { messaging } from '@/firebase'
 
+import { db } from '@/firebase' // firestore
+
+export async function saveTokenToCloud() {
+  const token = await getToken(messaging, {
+    vapidKey:
+      'BBjnTEpCnacbTbMLCY61vqDhHY7mFUtwtsA6vL4OrFD-MlhqPa3hkdugrHwxcGHzr3YFKOvpctK0S6t3v09ZoCM',
+  })
+
+  await db.collection('users').doc('me').set({
+    fcmToken: token,
+  })
+
+  return token
+}
 const VAPID_KEY =
-  'BBjnTEpCnacbTbMLCY61vqDhHY7mFUtwtsA6vL4OrFD-MlhqPa3hkdugrHwxcGHzr3YFKOvpctK0S6t3v09ZoCM'
+  'BPzOQo4IvYtRpXr37Mom8mr4tvP8SA4s-nMia5cL1rU6cKP8PrnH1Scsw69Mom_SmfbSg5tjp84YKdvt6183HiA'
 
 // 👉 xin quyền + lấy token
 export async function initFCM() {

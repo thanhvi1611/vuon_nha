@@ -3,11 +3,14 @@ import { defineStore } from 'pinia'
 import { db } from '@/db'
 import dayjs from 'dayjs'
 import { plantTemplates } from '@/data/plants'
+import { collection, addDoc } from 'firebase/firestore'
+import { db as cloudDb } from '@/firebase'
 
 export const usePlantStore = defineStore('plant', {
   state: () => ({
     plants: [],
     tasks: [],
+    fcmToken: '',
   }),
 
   getters: {
@@ -29,12 +32,19 @@ export const usePlantStore = defineStore('plant', {
 
       const tasks = this.generateTasks(id, plant)
 
-      if (tasks.length) {
-        await db.tasks.bulkAdd(tasks)
+      for (const t of tasks) {
+        await addDoc(collection(cloudDb, 'tasks'), {
+          ...t,
+          fcmToken: this.fcmToken,
+        })
+        console.log('🔥 Gửi lên Firestore:', {
+          ...t,
+          fcmToken: this.fcmToken,
+        })
       }
 
+      await db.tasks.bulkAdd(tasks)
       await this.load()
-      return id
     },
 
     async deletePlant(id) {
@@ -64,7 +74,7 @@ export const usePlantStore = defineStore('plant', {
         date: dayjs(plant.startDate).add(t.day, 'day').format('YYYY-MM-DD'),
 
         // ==================== THÊM PHẦN NÀY ====================
-        reminderTimes: t.reminderTimes || ['07:30', '17:03'], // Mặc định sáng + chiều
+        reminderTimes: t.reminderTimes || ['07:30', '12:07'], // Mặc định sáng + chiều
       }))
     },
 

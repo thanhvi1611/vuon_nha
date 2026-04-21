@@ -1,11 +1,21 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
 import dayjs from 'dayjs'
-import { initFCM, listenFCM } from '@/utils/fcm'
 
 const store = usePlantStore()
 
+import { startAutoNotification } from '@/utils/autoNotify'
+
+let stopNotify = null
+
+onMounted(() => {
+  stopNotify = startAutoNotification()
+})
+
+onUnmounted(() => {
+  if (stopNotify) stopNotify()
+})
 // ==================== TIME ====================
 const today = computed(() => dayjs())
 const currentMonth = ref(dayjs())
@@ -67,18 +77,6 @@ function selectDate(day) {
 }
 
 // ==================== INIT ====================
-onMounted(async () => {
-  await store.load()
-
-  console.log('📢 Notification permission:', Notification.permission)
-
-  // 👉 INIT FIREBASE
-  const token = await initFCM()
-  console.log('🔥 FCM TOKEN:', token)
-
-  // 👉 LẮNG NGHE PUSH
-  listenFCM()
-})
 </script>
 
 <template>

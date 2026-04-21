@@ -3,7 +3,7 @@ import { getMessaging } from 'firebase/messaging'
 import { getFirestore } from 'firebase/firestore'
 
 // 🔥 DÁN CONFIG Ở ĐÂY
-const firebaseConfig1 = {
+const firebaseConfig = {
   apiKey: 'AIzaSyAVPqEfFOxiiuuBzLfN-5c56TACbG885bA',
   authDomain: 'vuonannhien-cd467.firebaseapp.com',
   projectId: 'vuonannhien-cd467',
@@ -13,7 +13,7 @@ const firebaseConfig1 = {
   measurementId: 'G-TS2X1SJWD5',
 }
 
-const firebaseConfig = {
+const firebaseConfig1 = {
   apiKey: 'AIzaSyA352vFWZUHkYuTYmot89lQIPm1ghrQbgI',
   authDomain: 'qlbh-487ae.firebaseapp.com',
   projectId: 'qlbh-487ae',

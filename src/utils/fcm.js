@@ -5,7 +5,7 @@ import { doc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 
 const VAPID_KEY =
-  'BI7NMI8Yj_rAfG-mTmqkTqKESIr-on9xBtr3_V27WHGD0PGMvDc7aUE76uaVPbAJRv7Den4ixNQIDAMW-xkowDY'
+  'BPzOQo4IvYtRpXr37Mom8mr4tvP8SA4s-nMia5cL1rU6cKP8PrnH1Scsw69Mom_SmfbSg5tjp84YKdvt6183HiA'
 
 export async function initFCM() {
   try {

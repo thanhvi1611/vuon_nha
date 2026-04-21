@@ -16,28 +16,8 @@ firebase.initializeApp({
 const messaging = firebase.messaging()
 
 messaging.onBackgroundMessage((payload) => {
-  console.log('[FCM] Background message received →', payload)
-
-  // Lấy title và body từ notification hoặc data
-  const title = payload.notification?.title || payload.data?.title || '🌱 Lịch làm vườn'
-  const body = payload.notification?.body || payload.data?.body || 'Bạn có công việc chăm sóc cây'
-
-  console.log(`Đang hiển thị: ${title} - ${body}`)
-
-  self.registration
-    .showNotification(title, {
-      body: body,
-      icon: '/icons/plant-192.png', // thử dùng icon này, hoặc để trống ''
-      tag: 'plant-care-' + Date.now(),
-      vibrate: [200, 100, 200],
-      requireInteraction: false,
-    })
-    .then(() => console.log('✅ showNotification called OK'))
-    .catch((err) => console.error('❌ showNotification error:', err))
-})
-
-// Click thông báo mở app
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
-  event.waitUntil(clients.openWindow('/'))
+  console.log('[FCM] Background message:', payload)
+  self.registration.showNotification(payload.notification?.title || '🌱 Lịch làm vườn', {
+    body: payload.notification?.body || '',
+  })
 })

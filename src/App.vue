@@ -24,6 +24,7 @@ onMounted(async () => {
 
     <!-- Content -->
     <main class="px-4 pt-4 pb-24">
+      {{ store.fcmToken }}
       <router-view />
     </main>
 

@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       await admin.messaging().send({
         token: task.fcmToken,
         notification: {
-          title: `🌱 ${task.plantName || 'Cây của bạn'}`,
+          title: '🌱 Nhắc chăm cây',
           body: task.title,
         },
       })

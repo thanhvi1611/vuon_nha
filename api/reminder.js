@@ -30,29 +30,32 @@ export default async function handler(req, res) {
     const snapshot = await db.collection('tasks').get()
 
     let sent = 0
+    const grouped = {}
 
     for (const doc of snapshot.docs) {
       const task = doc.data()
 
-      if (!task.fcmToken) continue
-      if (task.done) continue
-      if (task.date !== today) continue
+      if (!task.fcmToken || task.done || task.date !== today) continue
+      if (!task.reminderTimes?.includes(currentTime)) continue
 
-      const reminderTimes = task.reminderTimes || []
+      const key = task.fcmToken
 
-      if (!reminderTimes.includes(currentTime)) continue
+      if (!grouped[key]) grouped[key] = []
 
-      console.log(`📢 SEND → ${task.title}`)
+      grouped[key].push(task)
+    }
+    for (const token in grouped) {
+      const tasks = grouped[token]
+
+      const body = tasks.map((t) => `• ${t.plantName}: ${t.title}`).join('\n')
 
       await admin.messaging().send({
-        token: task.fcmToken,
+        token,
         notification: {
-          title: `🌱 ${task.plantName || 'Cây của bạn'}`,
-          body: task.title,
+          title: '🌱 Việc cần làm hôm nay',
+          body,
         },
       })
-
-      sent++
     }
 
     return res.json({

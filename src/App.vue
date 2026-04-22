@@ -38,13 +38,6 @@ async function setupFCM() {
 }
 
 // 👉 nút test (KHÔNG gọi initFCM lại)
-function testFCM() {
-  if (store.fcmToken) {
-    alert('✅ Token OK:\n' + store.fcmToken.slice(0, 40) + '...')
-  } else {
-    alert('❌ Chưa có token')
-  }
-}
 
 onMounted(() => {
   setupFCM()

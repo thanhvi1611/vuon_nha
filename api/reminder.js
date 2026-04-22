@@ -51,11 +51,9 @@ export default async function handler(req, res) {
 
       await admin.messaging().send({
         token,
-        notification: {
+        data: {
           title: '🌱 Việc cần làm hôm nay',
           body,
-        },
-        data: {
           url: 'https://vuon-nha-zhsd.vercel.app/calendar',
         },
       })

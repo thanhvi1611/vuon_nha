@@ -16,9 +16,10 @@ const messaging = firebase.messaging()
 
 // 🔥 BACKGROUND MESSAGE
 messaging.onBackgroundMessage((payload) => {
-  console.log('[FCM] Background message:', payload)
-
-  const title = payload.notification?.title || '🌱 Lịch làm vườn'
+  self.registration.showNotification(payload.data.title, {
+    body: payload.data.body,
+    data: payload.data,
+  })
 })
 
 // 🔥 CLICK NOTIFICATION

@@ -36,6 +36,7 @@ export const usePlantStore = defineStore('plant', {
         await addDoc(collection(cloudDb, 'tasks'), {
           ...t,
           fcmToken: this.fcmToken,
+          plantName: plant.name, // 👈 THÊM DÒNG NÀY
         })
         console.log('🔥 Gửi lên Firestore:', {
           ...t,

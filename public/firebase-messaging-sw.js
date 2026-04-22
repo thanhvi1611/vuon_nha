@@ -19,11 +19,6 @@ messaging.onBackgroundMessage((payload) => {
   console.log('[FCM] Background message:', payload)
 
   const title = payload.notification?.title || '🌱 Lịch làm vườn'
-
-  self.registration.showNotification(title, {
-    body: payload.notification?.body || '',
-    data: payload.data, // 👈 QUAN TRỌNG
-  })
 })
 
 // 🔥 CLICK NOTIFICATION

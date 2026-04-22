@@ -1,7 +1,5 @@
-/* global process */
 import admin from 'firebase-admin'
 
-// 👉 init Firebase Admin (chỉ chạy 1 lần)
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
@@ -15,52 +13,53 @@ if (!admin.apps.length) {
 const db = admin.firestore()
 
 export default async function handler(req, res) {
-  const now = new Date()
+  try {
+    const now = new Date()
 
-  const today = now.toISOString().slice(0, 10)
-  const currentTime = now.toTimeString().slice(0, 5)
+    const today = now.toISOString().slice(0, 10)
+    const currentTime = now.toTimeString().slice(0, 5)
 
-  console.log(`⏰ RUN ${today} ${currentTime}`)
+    console.log(`🚀 RUN ${today} ${currentTime}`)
 
-  const snapshot = await db.collection('tasks').where('date', '==', today).get()
+    const snapshot = await db.collection('tasks').get()
 
-  const promises = []
+    let sent = 0
 
-  snapshot.forEach((doc) => {
-    const task = doc.data()
-    const ref = doc.ref
+    for (const doc of snapshot.docs) {
+      const task = doc.data()
 
-    const times = task.reminderTimes || []
-    const token = task.fcmToken
+      if (!task.fcmToken) continue
+      if (task.done) continue
+      if (task.date !== today) continue
 
-    if (!token) return
-    if (!times.includes(currentTime)) return
+      const reminderTimes = task.reminderTimes || []
 
-    const key = `${today}_${currentTime.replace(':', '')}`
+      if (!reminderTimes.includes(currentTime)) continue
 
-    if (task.notifiedMap && task.notifiedMap[key]) return
+      console.log(`📢 SEND → ${task.title}`)
 
-    const msg = {
-      token,
-      notification: {
-        title: '🌱 Nhắc chăm cây',
-        body: task.title,
-      },
-    }
-
-    const p = admin
-      .messaging()
-      .send(msg)
-      .then(() => {
-        return ref.update({
-          [`notifiedMap.${key}`]: true,
-        })
+      await admin.messaging().send({
+        token: task.fcmToken,
+        notification: {
+          title: '🌱 Nhắc chăm cây',
+          body: task.title,
+        },
       })
 
-    promises.push(p)
-  })
+      sent++
+    }
 
-  await Promise.all(promises)
+    return res.json({
+      ok: true,
+      sent,
+      time: currentTime,
+    })
+  } catch (err) {
+    console.error('🔥 ERROR:', err)
 
-  res.json({ ok: true })
+    return res.status(500).json({
+      ok: false,
+      error: err.message,
+    })
+  }
 }

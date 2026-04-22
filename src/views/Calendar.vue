@@ -8,7 +8,12 @@ const store = usePlantStore()
 import { startAutoNotification } from '@/utils/autoNotify'
 
 let stopNotify = null
+const ready = ref(false)
 
+onMounted(async () => {
+  await store.load()
+  ready.value = true
+})
 onMounted(() => {
   stopNotify = startAutoNotification()
 })

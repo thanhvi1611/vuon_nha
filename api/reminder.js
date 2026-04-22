@@ -55,6 +55,9 @@ export default async function handler(req, res) {
           title: '🌱 Việc cần làm hôm nay',
           body,
         },
+        data: {
+          url: '/calendar',
+        },
       })
     }
 

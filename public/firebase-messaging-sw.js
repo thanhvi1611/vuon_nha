@@ -10,17 +10,23 @@ firebase.initializeApp({
   storageBucket: 'vuonannhien-cd467.firebasestorage.app',
   messagingSenderId: '426802284269',
   appId: '1:426802284269:web:b645f01acc74ea0016aee4',
-  measurementId: 'G-TS2X1SJWD5',
 })
 
 const messaging = firebase.messaging()
 
+// 🔥 BACKGROUND MESSAGE
 messaging.onBackgroundMessage((payload) => {
   console.log('[FCM] Background message:', payload)
-  self.registration.showNotification(payload.notification?.title || '🌱 Lịch làm vườn', {
+
+  const title = payload.notification?.title || '🌱 Lịch làm vườn'
+
+  self.registration.showNotification(title, {
     body: payload.notification?.body || '',
+    data: payload.data, // 👈 QUAN TRỌNG
   })
 })
+
+// 🔥 CLICK NOTIFICATION
 self.addEventListener('notificationclick', function (event) {
   event.notification.close()
 
@@ -28,14 +34,12 @@ self.addEventListener('notificationclick', function (event) {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
-      // 👉 nếu đã có tab mở rồi thì focus
       for (const client of clientsArr) {
         if (client.url.includes(url)) {
           return client.focus()
         }
       }
 
-      // 👉 nếu chưa có thì mở mới
       return clients.openWindow(url)
     }),
   )

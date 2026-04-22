@@ -56,7 +56,7 @@ export default async function handler(req, res) {
           body,
         },
         data: {
-          url: '/calendar',
+          url: 'https://vuon-nha-zhsd.vercel.app/calendar',
         },
       })
     }

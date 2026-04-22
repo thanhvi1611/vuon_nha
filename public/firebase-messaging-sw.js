@@ -24,5 +24,19 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', function (event) {
   event.notification.close()
 
-  event.waitUntil(clients.openWindow(event.notification.data.url))
+  const url = event.notification.data?.url || '/'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
+      // 👉 nếu đã có tab mở rồi thì focus
+      for (const client of clientsArr) {
+        if (client.url.includes(url)) {
+          return client.focus()
+        }
+      }
+
+      // 👉 nếu chưa có thì mở mới
+      return clients.openWindow(url)
+    }),
+  )
 })

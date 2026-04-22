@@ -16,9 +16,15 @@ export default async function handler(req, res) {
   try {
     const now = new Date()
 
-    const today = now.toISOString().slice(0, 10)
-    const currentTime = now.toTimeString().slice(0, 5)
+    const today = now.toLocaleDateString('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+    })
 
+    const currentTime = now.toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
     console.log(`🚀 RUN ${today} ${currentTime}`)
 
     const snapshot = await db.collection('tasks').get()

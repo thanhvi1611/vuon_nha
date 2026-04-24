@@ -2,54 +2,71 @@
 import BottomNav from '@/components/layout/BottomNav.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
 import { initFCM } from '@/utils/fcm'
 
-const deferredPrompt = ref(null)
-const showInstall = ref(false)
-
-onMounted(() => {
-  window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('🔥 beforeinstallprompt fired')
-
-    e.preventDefault()
-
-    deferredPrompt.value = e
-    showInstall.value = true
-  })
-
-  // 👉 nếu đã cài thì ẩn
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    showInstall.value = false
-  }
-})
-
-async function installApp() {
-  if (!deferredPrompt.value) {
-    console.log('❌ Không có deferredPrompt')
-    return
-  }
-
-  deferredPrompt.value.prompt()
-
-  const { outcome } = await deferredPrompt.value.userChoice
-
-  console.log('👉 User chọn:', outcome)
-
-  if (outcome === 'accepted') {
-    showInstall.value = false
-  }
-
-  deferredPrompt.value = null
-}
+/* =======================
+   STATE
+======================= */
 const store = usePlantStore()
 
 const loading = ref(false)
 const error = ref('')
 const shortToken = ref('')
 
-// 👉 init 1 lần duy nhất
+const showInstall = ref(false)
+const deferredPrompt = ref(null)
+
+/* =======================
+   PWA INSTALL LOGIC
+======================= */
+
+const ONE_DAY = 24 * 60 * 60 * 1000
+
+onMounted(() => {
+  setupFCM()
+
+  const hideUntil = localStorage.getItem('hide-install-until')
+  const now = Date.now()
+
+  // nếu chưa hết hạn ẩn thì không hiện
+  if (hideUntil && now < Number(hideUntil)) {
+    return
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    deferredPrompt.value = e
+    showInstall.value = true
+  })
+})
+
+async function installApp() {
+  if (!deferredPrompt.value) return
+
+  deferredPrompt.value.prompt()
+  const result = await deferredPrompt.value.userChoice
+
+  if (result.outcome === 'accepted') {
+    console.log('✅ User installed app')
+  }
+
+  deferredPrompt.value = null
+  showInstall.value = false
+}
+
+/* ⛔ đóng và ẩn 1 ngày */
+function closeInstall() {
+  showInstall.value = false
+
+  const until = Date.now() + ONE_DAY
+  localStorage.setItem('hide-install-until', until)
+}
+
+/* =======================
+   FCM SETUP
+======================= */
 async function setupFCM() {
   loading.value = true
   error.value = ''
@@ -60,72 +77,73 @@ async function setupFCM() {
     if (token) {
       store.fcmToken = token
       shortToken.value = token.slice(0, 30) + '...'
-
       console.log('✅ TOKEN OK:', token)
     } else {
-      error.value = 'Không lấy được token (token null)'
-      console.warn('❌ Token null')
+      error.value = 'Không lấy được token'
     }
   } catch (err) {
-    console.error('❌ Lỗi init FCM:', err)
-    error.value = err.message || 'Lỗi không xác định'
+    console.error(err)
+    error.value = err.message || 'FCM error'
   }
 
   loading.value = false
 }
-
-// 👉 nút test (KHÔNG gọi initFCM lại)
-
-onMounted(() => {
-  setupFCM()
-})
 </script>
 
 <template>
   <div class="min-h-dvh bg-[rgb(var(--color-bg))] text-gray-800">
-    <!-- Header -->
+    <!-- HEADER -->
     <AppHeader />
 
-    <!-- Content -->
+    <!-- CONTENT -->
     <main class="px-4 pt-4 pb-24 space-y-4">
-      <!-- BUTTON TEST -->
-
-      <!-- STATUS -->
+      <!-- FCM STATUS -->
       <div class="text-sm space-y-1">
-        <div v-if="loading">⏳ Đang lấy token11...</div>
+        <div v-if="loading">⏳ Đang lấy token...</div>
 
         <div v-else-if="store.fcmToken" class="text-green-600">✅ Token OK: {{ shortToken }}</div>
 
         <div v-else class="text-red-500">❌ {{ error || 'Chưa có token' }}</div>
       </div>
 
-      <!-- DEBUG INFO -->
-
       <router-view />
     </main>
 
-    <!-- Bottom nav -->
+    <!-- BOTTOM NAV -->
     <BottomNav />
-    <div
-      v-if="showInstall"
-      class="fixed bottom-4 left-4 right-4 bg-white rounded-2xl shadow-xl p-4 border flex items-center justify-between"
-    >
-      <div>
-        <div class="font-semibold">🌱 Cài app Vườn Nhà</div>
-        <div class="text-sm text-gray-500">Mở nhanh hơn & nhận thông báo tốt hơn</div>
+
+    <!-- INSTALL PWA -->
+    <div v-if="showInstall" class="fixed bottom-5 left-4 right-4 z-50 animate-fade-in">
+      <div
+        class="bg-white/90 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-4 flex items-center justify-between"
+      >
+        <!-- LEFT -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-green-100 flex items-center justify-center">🌱</div>
+
+          <div>
+            <div class="font-semibold text-gray-800">Cài app Vườn Nhà</div>
+            <div class="text-xs text-gray-500">Truy cập nhanh • Nhận thông báo • Mượt hơn</div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="flex items-center gap-2">
+          <button
+            @click="installApp"
+            class="px-4 py-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md active:scale-95 transition"
+          >
+            Cài đặt
+          </button>
+
+          <button
+            @click="closeInstall"
+            class="px-2 py-2 text-gray-400 hover:text-gray-600 transition"
+          >
+            ✕
+          </button>
+        </div>
       </div>
-
-      <button @click="installApp" class="bg-green-500 text-white px-4 py-2 rounded-xl">Cài</button>
-    </div>
-    <div
-      v-if="showUpdate"
-      class="fixed top-4 left-4 right-4 bg-green-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-between z-50"
-    >
-      <div>🌱 Có phiên bản mới</div>
-
-      <button @click="updateApp" class="bg-white text-green-600 px-3 py-1 rounded-lg">
-        Cập nhật
-      </button>
     </div>
   </div>
 </template>

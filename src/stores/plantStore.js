@@ -75,7 +75,7 @@ export const usePlantStore = defineStore('plant', {
         date: dayjs(plant.startDate).add(t.day, 'day').format('YYYY-MM-DD'),
 
         // ==================== THÊM PHẦN NÀY ====================
-        reminderTimes: t.reminderTimes || ['07:30', '19:51'], // Mặc định sáng + chiều
+        reminderTimes: t.reminderTimes || ['06:30', '16:00'], // Mặc định sáng + chiều
       }))
     },
 

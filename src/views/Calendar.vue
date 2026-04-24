@@ -21,6 +21,11 @@ onMounted(() => {
 onUnmounted(() => {
   if (stopNotify) stopNotify()
 })
+
+function daysSince(date) {
+  if (!date) return 0
+  return dayjs().diff(dayjs(date), 'day')
+}
 // ==================== TIME ====================
 const today = computed(() => dayjs())
 const currentMonth = ref(dayjs())
@@ -154,6 +159,9 @@ function selectDate(day) {
       >
         <h3 class="font-semibold text-green-700 mb-3 flex items-center gap-2">
           🌱 {{ plantMap[plantId]?.name }}
+          <span class="text-xs text-green-500">
+            ({{ daysSince(plantMap[plantId]?.startDate) }} ngày)
+          </span>
         </h3>
 
         <div class="space-y-3">

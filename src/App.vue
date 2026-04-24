@@ -42,14 +42,6 @@ async function setupFCM() {
 onMounted(() => {
   setupFCM()
 })
-async function testAPI() {
-  const res = await fetch('/api/reminder')
-
-  const text = await res.text()
-  console.log('RAW RESPONSE:', text)
-  const data = await res.json()
-  console.log('API result:', data)
-}
 </script>
 
 <template>
@@ -60,9 +52,6 @@ async function testAPI() {
     <!-- Content -->
     <main class="px-4 pt-4 pb-24 space-y-4">
       <!-- BUTTON TEST -->
-      <button @click="testAPI" class="bg-red-500 text-white p-4 rounded-xl w-full active:scale-95">
-        Test API trên Mobile
-      </button>
 
       <!-- STATUS -->
       <div class="text-sm space-y-1">

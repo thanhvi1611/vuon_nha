@@ -38,7 +38,6 @@ export async function initFCM() {
 
     console.log('🔥 FCM TOKEN:', token)
     await saveTokenToCloud(token)
-    alert('✅ Lấy token thành công!')
 
     return token
   } catch (error) {

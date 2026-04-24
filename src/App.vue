@@ -6,6 +6,43 @@ import { onMounted, ref } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
 import { initFCM } from '@/utils/fcm'
 
+const deferredPrompt = ref(null)
+const showInstall = ref(false)
+
+onMounted(() => {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('🔥 beforeinstallprompt fired')
+
+    e.preventDefault()
+
+    deferredPrompt.value = e
+    showInstall.value = true
+  })
+
+  // 👉 nếu đã cài thì ẩn
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    showInstall.value = false
+  }
+})
+
+async function installApp() {
+  if (!deferredPrompt.value) {
+    console.log('❌ Không có deferredPrompt')
+    return
+  }
+
+  deferredPrompt.value.prompt()
+
+  const { outcome } = await deferredPrompt.value.userChoice
+
+  console.log('👉 User chọn:', outcome)
+
+  if (outcome === 'accepted') {
+    showInstall.value = false
+  }
+
+  deferredPrompt.value = null
+}
 const store = usePlantStore()
 
 const loading = ref(false)
@@ -78,12 +115,7 @@ onMounted(() => {
         <div class="text-sm text-gray-500">Mở nhanh hơn & nhận thông báo tốt hơn</div>
       </div>
 
-      <button
-        @click="installApp"
-        class="bg-green-500 text-white px-4 py-2 rounded-xl active:scale-95"
-      >
-        Cài
-      </button>
+      <button @click="installApp" class="bg-green-500 text-white px-4 py-2 rounded-xl">Cài</button>
     </div>
   </div>
 </template>

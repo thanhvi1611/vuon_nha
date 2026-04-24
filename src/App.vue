@@ -69,5 +69,21 @@ onMounted(() => {
 
     <!-- Bottom nav -->
     <BottomNav />
+    <div
+      v-if="showInstall"
+      class="fixed bottom-4 left-4 right-4 bg-white rounded-2xl shadow-xl p-4 border flex items-center justify-between"
+    >
+      <div>
+        <div class="font-semibold">🌱 Cài app Vườn Nhà</div>
+        <div class="text-sm text-gray-500">Mở nhanh hơn & nhận thông báo tốt hơn</div>
+      </div>
+
+      <button
+        @click="installApp"
+        class="bg-green-500 text-white px-4 py-2 rounded-xl active:scale-95"
+      >
+        Cài
+      </button>
+    </div>
   </div>
 </template>

@@ -13,7 +13,7 @@ export default defineConfig({
 
     // ✅ PWA phải nằm ở đây
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
 
       manifest: {
         name: 'Vườn Nhà 🌱',

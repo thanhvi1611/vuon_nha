@@ -92,7 +92,7 @@ onMounted(() => {
 
       <!-- STATUS -->
       <div class="text-sm space-y-1">
-        <div v-if="loading">⏳ Đang lấy token...</div>
+        <div v-if="loading">⏳ Đang lấy token11...</div>
 
         <div v-else-if="store.fcmToken" class="text-green-600">✅ Token OK: {{ shortToken }}</div>
 
@@ -116,6 +116,16 @@ onMounted(() => {
       </div>
 
       <button @click="installApp" class="bg-green-500 text-white px-4 py-2 rounded-xl">Cài</button>
+    </div>
+    <div
+      v-if="showUpdate"
+      class="fixed top-4 left-4 right-4 bg-green-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-between z-50"
+    >
+      <div>🌱 Có phiên bản mới</div>
+
+      <button @click="updateApp" class="bg-white text-green-600 px-3 py-1 rounded-lg">
+        Cập nhật
+      </button>
     </div>
   </div>
 </template>

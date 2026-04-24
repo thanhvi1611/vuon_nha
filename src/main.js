@@ -3,8 +3,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import { db } from '@/db'
-import dayjs from 'dayjs'
+
 const app = createApp(App)
 
 app.use(createPinia())
@@ -12,5 +11,12 @@ app.use(router)
 
 app.mount('#app')
 import { registerSW } from 'virtual:pwa-register'
+import { ref } from 'vue'
 
-registerSW({ immediate: true })
+const showUpdate = ref(false)
+
+registerSW({
+  onNeedRefresh() {
+    showUpdate.value = true // 👈 hiện UI
+  },
+})

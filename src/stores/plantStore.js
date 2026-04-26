@@ -3,10 +3,9 @@ import { defineStore } from 'pinia'
 import { db } from '@/db'
 import dayjs from 'dayjs'
 import { plantTemplates } from '@/data/plants'
-import { collection, addDoc } from 'firebase/firestore'
+import { collection, addDoc,getDocs } from 'firebase/firestore'
 import { db as cloudDb } from '@/firebase'
 import { auth } from '@/firebase'
-
 
 
 function getUserId() {
@@ -130,7 +129,44 @@ export const usePlantStore = defineStore('plant', {
       const day = dayjs().diff(dayjs(plant.startDate), 'day')
       return template.stages.find((s) => day >= s.dayStart && day <= s.dayEnd)
     },
-    async syncToCloud() {
+    async loadFromCloud() {
+  const userId = auth.currentUser?.uid
+  if (!userId) return
+
+  // 👉 nếu đã có data rồi thì không load lại
+  if (this.plants.length > 0) {
+    console.log('⚠️ Local đã có data → skip load')
+    return
+  }
+
+  console.log('☁️ Load từ cloud...')
+
+  const plantSnap = await getDocs(
+    collection(cloudDb, 'users', userId, 'plants')
+  )
+
+  const plants = plantSnap.docs.map(doc => ({
+    ...doc.data(),
+    cloudId: doc.id,
+  }))
+
+  const taskSnap = await getDocs(
+    collection(cloudDb, 'users', userId, 'tasks')
+  )
+
+  const tasks = taskSnap.docs.map(doc => ({
+    ...doc.data(),
+    cloudId: doc.id,
+  }))
+
+  await db.plants.bulkAdd(plants)
+  await db.tasks.bulkAdd(tasks)
+
+  await this.load()
+
+  console.log('✅ Load xong')
+},
+   async syncToCloud() {
   const userId = auth.currentUser?.uid
   if (!userId) return
 
@@ -138,17 +174,36 @@ export const usePlantStore = defineStore('plant', {
 
   // 👉 sync plants
   for (const plant of this.plants) {
-    await addDoc(collection(cloudDb, 'users', userId, 'plants'), {
-      ...plant,
-      createdAt: new Date(),
+    if (plant.cloudId) continue
+
+    const ref = await addDoc(
+      collection(cloudDb, 'users', userId, 'plants'),
+      {
+        ...plant,
+        createdAt: new Date(),
+      }
+    )
+
+    // 👉 lưu lại cloudId
+    await db.plants.update(plant.id, {
+      cloudId: ref.id,
     })
   }
 
   // 👉 sync tasks
   for (const task of this.tasks) {
-    await addDoc(collection(cloudDb, 'users', userId, 'tasks'), {
-      ...task,
-      createdAt: new Date(),
+    if (task.cloudId) continue
+
+    const ref = await addDoc(
+      collection(cloudDb, 'users', userId, 'tasks'),
+      {
+        ...task,
+        createdAt: new Date(),
+      }
+    )
+
+    await db.tasks.update(task.id, {
+      cloudId: ref.id,
     })
   }
 

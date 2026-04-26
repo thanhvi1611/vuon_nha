@@ -10,9 +10,17 @@ async function handleLogin() {
   try {
     await upgradeToGoogle()
 
-    // 🔥 QUAN TRỌNG
-    await plantStore.syncToCloud()
-    console.log('🎉 Merge hoàn tất')
+    // 👉 nếu local có data → sync lên
+    if (plantStore.plants.length > 0) {
+      await plantStore.syncToCloud()
+    }
+
+    // 👉 nếu local trống → load về
+    if (plantStore.plants.length === 0) {
+      await plantStore.loadFromCloud()
+    }
+
+    console.log('🎉 Merge OK')
   } catch (err) {
     console.error(err)
   }

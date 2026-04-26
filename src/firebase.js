@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getMessaging } from 'firebase/messaging'
 import { getFirestore } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
 
 // 🔥 DÁN CONFIG Ở ĐÂY
 const firebaseConfig = {
@@ -22,7 +23,8 @@ const firebaseConfig1 = {
   appId: '1:227132696328:web:28a3facffc568a07a4eebd',
   measurementId: 'G-0KHPDM85LQ',
 }
-
 const app = initializeApp(firebaseConfig)
+
+export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const messaging = getMessaging(app)

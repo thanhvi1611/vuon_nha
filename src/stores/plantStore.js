@@ -5,7 +5,13 @@ import dayjs from 'dayjs'
 import { plantTemplates } from '@/data/plants'
 import { collection, addDoc } from 'firebase/firestore'
 import { db as cloudDb } from '@/firebase'
+import { auth } from '@/firebase'
 
+
+
+function getUserId() {
+  return auth.currentUser?.uid
+}
 export const usePlantStore = defineStore('plant', {
   state: () => ({
     plants: [],
@@ -27,26 +33,50 @@ export const usePlantStore = defineStore('plant', {
     },
 
     // ➕ Thêm cây mới + tạo task
-    async addPlant(plant) {
-      const id = await db.plants.add(plant)
+   async addPlant(plant) {
+  const userId = getUserId()
+  if (!userId) {
+    console.warn('❌ Chưa login')
+    return
+  }
 
-      const tasks = this.generateTasks(id, plant)
+  // 👉 lưu local trước (nhanh)
+  const plantId = await db.plants.add(plant)
 
-      for (const t of tasks) {
-        await addDoc(collection(cloudDb, 'tasks'), {
-          ...t,
-          fcmToken: this.fcmToken,
-          plantName: plant.name, // 👈 THÊM DÒNG NÀY
-        })
-        console.log('🔥 Gửi lên Firestore:', {
-          ...t,
-          fcmToken: this.fcmToken,
-        })
-      }
+  // 👉 tạo task
+  const tasks = this.generateTasks(plantId, plant)
 
-      await db.tasks.bulkAdd(tasks)
-      await this.load()
-    },
+  // 👉 lưu LOCAL
+  await db.tasks.bulkAdd(tasks)
+
+  // 👉 lưu CLOUD (plant)
+  const plantRef = await addDoc(
+    collection(cloudDb, 'users', userId, 'plants'),
+    {
+      ...plant,
+      createdAt: new Date(),
+    }
+  )
+
+  console.log('☁️ Plant saved:', plantRef.id)
+
+  // 👉 lưu CLOUD (tasks)
+  for (const t of tasks) {
+    const payload = {
+      ...t,
+      fcmToken: this.fcmToken,
+      plantName: plant.name,
+      userId,
+      createdAt: new Date(),
+    }
+
+    await addDoc(collection(cloudDb, 'users', userId, 'tasks'), payload)
+
+    console.log('🔥 Task saved:', payload)
+  }
+
+  await this.load()
+},
 
     async deletePlant(id) {
       await db.plants.delete(id)
@@ -100,5 +130,31 @@ export const usePlantStore = defineStore('plant', {
       const day = dayjs().diff(dayjs(plant.startDate), 'day')
       return template.stages.find((s) => day >= s.dayStart && day <= s.dayEnd)
     },
+    async syncToCloud() {
+  const userId = auth.currentUser?.uid
+  if (!userId) return
+
+  console.log('☁️ Sync lên cloud...')
+
+  // 👉 sync plants
+  for (const plant of this.plants) {
+    await addDoc(collection(cloudDb, 'users', userId, 'plants'), {
+      ...plant,
+      createdAt: new Date(),
+    })
+  }
+
+  // 👉 sync tasks
+  for (const task of this.tasks) {
+    await addDoc(collection(cloudDb, 'users', userId, 'tasks'), {
+      ...task,
+      createdAt: new Date(),
+    })
+  }
+
+  console.log('✅ Sync xong')
+}
   },
+  
 })
+

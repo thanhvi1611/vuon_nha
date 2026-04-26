@@ -187,4 +187,5 @@ export const plantTemplates = [
       { day: 70, title: 'Thu hoạch' },
     ],
   },
+ 
 ]

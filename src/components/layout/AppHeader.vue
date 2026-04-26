@@ -3,6 +3,10 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { usePlantStore } from '@/stores/plantStore'
 
+import { useAuthStore } from '@/stores/authStore'
+
+const authStore = useAuthStore()
+
 const todayStr = dayjs().format('YYYY-MM-DD')
 
 // 👉 tổng task hôm nay
@@ -34,6 +38,8 @@ const totalPlants = computed(() => store.plants.length)
 // 👉 task hôm nay (chưa làm)
 
 const today = dayjs().format('DD/MM')
+
+
 </script>
 
 <template>
@@ -97,6 +103,22 @@ const today = dayjs().format('DD/MM')
           {{ doneToday.length }}/{{ allToday.length }} hoàn thành
         </div>
       </div>
+      <div class="flex items-center gap-3">
+    <!-- user info -->
+    <div v-if="!authStore.user?.isAnonymous" class="text-sm">
+      👤 {{ authStore.user.displayName || 'User' }}
     </div>
+
+    <!-- logout button -->
+    <button
+      v-if="!authStore.user?.isAnonymous"
+      @click="authStore.logout"
+      class="text-xs bg-gray-200 px-3 py-1 rounded-lg"
+    >
+      Đăng xuất
+    </button>
+  </div>
+    </div>
+
   </header>
 </template>

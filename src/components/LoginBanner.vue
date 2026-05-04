@@ -1,44 +1,65 @@
+<!-- src/components/LoginBanner.vue -->
 <script setup>
-import { upgradeToGoogle } from '@/services/auth'
-import { useAuthStore } from '@/stores/authStore'
-import { usePlantStore } from '@/stores/plantStore'
+import { ref } from 'vue'
+import {
+  startGoogleLogin,
+  loginWithRedirectGoogle,
+} from '@/services/auth'
 
-const plantStore = usePlantStore()
-const authStore = useAuthStore()
+const loading = ref(false)
+const error = ref('')
 
 async function handleLogin() {
+  loading.value = true
+  error.value = ''
+
   try {
-    await upgradeToGoogle()
+    // Ưu tiên One Tap / FedCM
+    const ok = await startGoogleLogin()
 
-    // 👉 nếu local có data → sync lên
-    if (plantStore.plants.length > 0) {
-      await plantStore.syncToCloud()
+    // nếu bị block / skip => fallback redirect
+    if (!ok) {
+      await loginWithRedirectGoogle()
     }
-
-    // 👉 nếu local trống → load về
-    if (plantStore.plants.length === 0) {
-      await plantStore.loadFromCloud()
-    }
-
-    console.log('🎉 Merge OK')
   } catch (err) {
     console.error(err)
+    error.value = 'Không thể đăng nhập'
+
+    try {
+      await loginWithRedirectGoogle()
+    } catch (e) {
+      console.error(e)
+    }
   }
+
+  loading.value = false
 }
 </script>
 
 <template>
   <div
-    v-if="!authStore.loading && authStore.user?.isAnonymous"
-    class="p-3 bg-yellow-100 text-sm flex items-center justify-between"
+    class="p-3 bg-yellow-100 border-b border-yellow-200 flex items-center justify-between gap-3"
   >
-    <span>👉 Bạn đang dùng chế độ khách</span>
+    <div class="text-sm">
+      <div class="font-semibold">🔐 Đăng nhập để đồng bộ dữ liệu</div>
+      <div class="text-xs text-gray-600">
+        Giữ cây trồng & task khi đổi điện thoại
+      </div>
+
+      <div
+        v-if="error"
+        class="text-red-500 text-xs mt-1"
+      >
+        {{ error }}
+      </div>
+    </div>
 
     <button
       @click="handleLogin"
-      class="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs"
+      :disabled="loading"
+      class="px-3 py-2 rounded-xl bg-blue-500 text-white text-sm shrink-0"
     >
-      Đăng nhập Google
+      {{ loading ? '...' : 'Đăng nhập Google' }}
     </button>
   </div>
 </template>

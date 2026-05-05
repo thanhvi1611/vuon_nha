@@ -53,19 +53,24 @@ async function handleRedirect() {
   console.log('🚀 [AUTH] Start handleRedirect')
   console.log('👉 Current URL:', window.location.href)
 
+  // Nếu đang ở trang handler thì chờ một chút cho Firebase init
+  if (window.location.pathname.includes('/__/auth/handler')) {
+    console.log('🔄 Đang ở auth handler page, chờ Firebase xử lý...')
+    await new Promise(resolve => setTimeout(resolve, 800))
+  }
+
   try {
     const result = await getRedirectResult(auth)
     console.log('👉 Redirect raw result:', result)
 
     if (result?.user) {
-      console.log('✅ Đăng nhập thành công qua Redirect!', result.user.uid)
-      // Có thể lưu thêm credential nếu cần
+      console.log('✅ Đăng nhập REDIRECT THÀNH CÔNG!', result.user.uid)
+      // authStore.setUser(result.user) ...
     } else {
-      console.warn('⚠️ No redirect result (NULL) - Có thể là load bình thường')
+      console.warn('⚠️ No redirect result (NULL)')
     }
   } catch (err) {
     console.error('❌ Redirect ERROR:', err.code, err.message)
-    // Các error hay gặp: auth/redirect-result-missing, auth/argument-error...
   }
 
   console.log('🧭 [AUTH] End handleRedirect')

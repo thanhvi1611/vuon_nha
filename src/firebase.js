@@ -14,15 +14,7 @@ const firebaseConfig = {
   measurementId: 'G-TS2X1SJWD5',
 }
 
-const firebaseConfig1 = {
-  apiKey: 'AIzaSyA352vFWZUHkYuTYmot89lQIPm1ghrQbgI',
-  authDomain: 'qlbh-487ae.firebaseapp.com',
-  projectId: 'qlbh-487ae',
-  storageBucket: 'qlbh-487ae.firebasestorage.app',
-  messagingSenderId: '227132696328',
-  appId: '1:227132696328:web:28a3facffc568a07a4eebd',
-  measurementId: 'G-0KHPDM85LQ',
-}
+
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)

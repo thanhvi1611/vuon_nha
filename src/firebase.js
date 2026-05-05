@@ -6,7 +6,7 @@ import { getAuth } from 'firebase/auth'
 // 🔥 DÁN CONFIG Ở ĐÂY
 const firebaseConfig = {
   apiKey: 'AIzaSyAVPqEfFOxiiuuBzLfN-5c56TACbG885bA',
-  authDomain: 'vuonannhien-cd467.firebaseapp.com',
+  authDomain: 'vuon-nha.vercel.app',
   projectId: 'vuonannhien-cd467',
   storageBucket: 'vuonannhien-cd467.firebasestorage.app',
   messagingSenderId: '426802284269',

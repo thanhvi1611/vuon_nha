@@ -54,10 +54,10 @@ async function handleRedirect() {
   console.log('👉 Current URL:', window.location.href)
 
   // Nếu đang ở trang handler thì chờ một chút cho Firebase init
-  if (window.location.pathname.includes('/__/auth/handler')) {
-    console.log('🔄 Đang ở auth handler page, chờ Firebase xử lý...')
-    await new Promise(resolve => setTimeout(resolve, 800))
-  }
+ if (window.location.pathname.includes('/__/auth/handler')) {
+  console.log('🔄 Đang ở auth handler → chờ Firebase xử lý...')
+  await new Promise(r => setTimeout(r, 1200)) // tăng thời gian chờ
+}
 
   try {
     const result = await getRedirectResult(auth)

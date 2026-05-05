@@ -1,9 +1,8 @@
 import { initializeApp } from 'firebase/app'
-import { getMessaging } from 'firebase/messaging'
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getMessaging } from 'firebase/messaging'
 
-// 🔥 DÁN CONFIG Ở ĐÂY
 const firebaseConfig = {
   apiKey: 'AIzaSyAVPqEfFOxiiuuBzLfN-5c56TACbG885bA',
   authDomain: 'vuon-nha.vercel.app',
@@ -14,9 +13,12 @@ const firebaseConfig = {
   measurementId: 'G-TS2X1SJWD5',
 }
 
-
 const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
+
+// 🔥 Thêm persistence
+setPersistence(auth, browserLocalPersistence)
+
 export const db = getFirestore(app)
 export const messaging = getMessaging(app)
